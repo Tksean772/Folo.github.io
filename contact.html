@@ -11,7 +11,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="contact.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -74,7 +74,7 @@
                 browser, and any error messages you saw. It helps us fix things faster.
             </div>
         </div>
-        <form action="submit_contact_form.php" method="post" onsubmit="handleSubmit(); return false;">
+        <form onsubmit="handleSubmit(); return false;">
             <div class="form-card">
                 <div id="formWrap">
                     <div class="form-row">
@@ -113,7 +113,7 @@
                     <div class="field">
                         <label for="message">Message</label>
                         <textarea id="message" placeholder="Tell us what's on your mind..."></textarea>
-                        <div class="field-error" id="message-err">Please write a message (at least 20 characters).</div>
+                        <div class="field-error" id="message-err">Please write a message (at least 10 characters).</div>
                     </div>
 
                     <div class="captcha-wrap">
@@ -127,7 +127,7 @@
                     <div class="field-error show" id="captcha-err" style="margin-bottom:0.75rem; display:none;">Please
                         confirm you're not a robot.</div>
 
-                    <button class="submit-btn" id="submitBtn" type="button" onclick="handleSubmit()">
+                    <button class="submit-btn" id="submitBtn" type="submit">
                         <span id="btnText">Send message</span>
                         <div class="spinner" id="spinner"></div>
                     </button>
@@ -233,47 +233,56 @@
         });
 
         async function handleSubmit() {
-    if (!validate()) return;
-    
-    const btn = document.getElementById('submitBtn');
-    const spinner = document.getElementById('spinner');
-    const btnText = document.getElementById('btnText');
-    
-    btn.disabled = true;
-    btnText.textContent = 'Sending...';
-    spinner.style.display = 'block';
+            if (!validate()) return;
+            
+            const btn = document.getElementById('submitBtn');
+            const spinner = document.getElementById('spinner');
+            const btnText = document.getElementById('btnText');
+            
+            btn.disabled = true;
+            btnText.textContent = 'Sending...';
+            spinner.style.display = 'block';
 
-    // Prepare data
-    const formData = new FormData();
-    formData.append('fname', document.getElementById('fname').value);
-    formData.append('lname', document.getElementById('lname').value);
-    formData.append('email', document.getElementById('email').value);
-    formData.append('topic', document.getElementById('topic').value);
-    formData.append('message', document.getElementById('message').value);
+            // Combine first and last name
+            const firstName = document.getElementById('fname').value;
+            const lastName = document.getElementById('lname').value;
+            const fullName = `${firstName} ${lastName}`;
+            
+            const emailData = {
+                name: fullName,
+                email: document.getElementById('email').value,
+                message: document.getElementById('message').value,
+                topic: document.getElementById('topic').value
+            };
 
-    try {
-        const response = await fetch('submit_contact_form.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const result = await response.json();
+            try {
+                const response = await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(emailData)
+                });
+                
+                const result = await response.json();
 
-        if (result.status === 'success') {
-            document.getElementById('confirmEmail').textContent = document.getElementById('email').value;
-            document.getElementById('formWrap').style.display = 'none';
-            document.getElementById('successScreen').classList.add('show');
-        } else {
-            alert("Error sending message: " + result.message);
+                if (response.ok && result.success) {
+                    document.getElementById('confirmEmail').textContent = document.getElementById('email').value;
+                    document.getElementById('formWrap').style.display = 'none';
+                    document.getElementById('successScreen').classList.add('show');
+                } else {
+                    alert("Error sending message: " + (result.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert("Connection error. Please try again: " + err.message);
+                console.error('Form submission error:', err);
+            } finally {
+                spinner.style.display = 'none';
+                btn.disabled = false;
+                btnText.textContent = 'Send message';
+            }
         }
-    } catch (err) {
-        alert("Connection error. Please try again.");
-    } finally {
-        spinner.style.display = 'none';
-        btn.disabled = false;
-        btnText.textContent = 'Send message';
-    }
-}
+
         function resetForm() {
             ['fname', 'lname', 'email', 'message'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('topic').value = '';
