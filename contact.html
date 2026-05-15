@@ -47,10 +47,10 @@
 
             <div class="contact-info">
                 <div class="info-item">
-                    <div class="info-icon">✉</div>
+                    <div class="info-icon">💬</div>
                     <div>
-                        <div class="info-label">Email</div>
-                        <div class="info-value"><a href="mailto:folo.tracker@gmail.com">folo.tracker@gmail.com</a></div>
+                        <div class="info-label">WhatsApp</div>
+                        <div class="info-value"><a href="https://wa.me/260976466361">+260 97 646 6361</a></div>
                     </div>
                 </div>
                 <div class="info-item">
@@ -128,7 +128,7 @@
                         confirm you're not a robot.</div>
 
                     <button class="submit-btn" id="submitBtn" type="submit">
-                        <span id="btnText">Send message</span>
+                        <span id="btnText">Send to WhatsApp</span>
                         <div class="spinner" id="spinner"></div>
                     </button>
 
@@ -141,8 +141,7 @@
                 <div class="success-screen" id="successScreen">
                     <div class="success-circle">✓</div>
                     <h2>Message sent!</h2>
-                    <p>Thanks for reaching out. We'll get back to you at <strong id="confirmEmail"></strong> within 24
-                        hours.</p>
+                    <p>Your message has been sent to WhatsApp. We'll reply to <strong id="confirmEmail"></strong> shortly.</p>
                     <br>
                     <button class="submit-btn" type="button" style="max-width:200px;margin:1rem auto 0" onclick="resetForm()">Send
                         another</button>
@@ -232,55 +231,40 @@
             });
         });
 
-        async function handleSubmit() {
+        function handleSubmit() {
             if (!validate()) return;
             
             const btn = document.getElementById('submitBtn');
-            const spinner = document.getElementById('spinner');
             const btnText = document.getElementById('btnText');
             
             btn.disabled = true;
-            btnText.textContent = 'Sending...';
-            spinner.style.display = 'block';
+            btnText.textContent = 'Opening WhatsApp...';
 
-            // Combine first and last name
             const firstName = document.getElementById('fname').value;
             const lastName = document.getElementById('lname').value;
-            const fullName = `${firstName} ${lastName}`;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+            const topic = document.getElementById('topic').value;
             
-            const emailData = {
-                name: fullName,
-                email: document.getElementById('email').value,
-                message: document.getElementById('message').value,
-                topic: document.getElementById('topic').value
-            };
-
-            try {
-                const response = await fetch('api/send-email.js', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(emailData)
-                });
+            // Your WhatsApp number
+            const whatsappNumber = '260976466361';
+            
+            // Format the message
+            const text = `*New Contact Form Submission*\n\n*Name:* ${firstName} ${lastName}\n*Email:* ${email}\n*Topic:* ${topic}\n\n*Message:*\n${message}`;
+            const encodedText = encodeURIComponent(text);
+            
+            // Open WhatsApp
+            window.open(`https://wa.me/${whatsappNumber}?text=${encodedText}`, '_blank');
+            
+            // Show success screen after a short delay
+            setTimeout(() => {
+                document.getElementById('confirmEmail').textContent = email;
+                document.getElementById('formWrap').style.display = 'none';
+                document.getElementById('successScreen').classList.add('show');
                 
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    document.getElementById('confirmEmail').textContent = document.getElementById('email').value;
-                    document.getElementById('formWrap').style.display = 'none';
-                    document.getElementById('successScreen').classList.add('show');
-                } else {
-                    alert("Error sending message: " + (result.error || 'Unknown error'));
-                }
-            } catch (err) {
-                alert("Connection error. Please try again: " + err.message);
-                console.error('Form submission error:', err);
-            } finally {
-                spinner.style.display = 'none';
                 btn.disabled = false;
-                btnText.textContent = 'Send message';
-            }
+                btnText.textContent = 'Send to WhatsApp';
+            }, 500);
         }
 
         function resetForm() {
